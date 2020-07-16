@@ -12,6 +12,7 @@ require(fable, quietly = TRUE)
 require(fabletools, quietly = TRUE)
 require(feasts, quietly = TRUE)
 require(urca, quietly = TRUE)
+require(rstudioapi, quietly = TRUE)
 
 # Get cases ---------------------------------------------------------------
 
@@ -70,24 +71,17 @@ NCoVUtils::reset_cache()
 # Update 18 de Junio: Se toman los ultimos 60 dias.
 # El filtro de NACIONAL se ejecuta previamente.
 
-cases <- readr::read_csv('/home/covid/casos_260620.txt') %>%
-  dplyr::filter( date >= Sys.Date() - 60 ) %>%
-  dplyr::filter( cases > 0 ) %>%
-  dplyr::filter( region != 'COLIMA' ) %>%
-  dplyr::filter( region != 'DURANGO' )
+setwd(dirname(getActiveDocumentContext()$path))
 
-#cases <- get_mexico_regional_cases() %>% 
-#  dplyr::filter(import_status  == "local") %>%
-#  dplyr::rename(region = Region)
+cases <- readr::read_csv(paste('../casos_', format(Sys.Date(), "%d%m%y"), '.txt', sep="")) %>%
+  dplyr::filter( date >= Sys.Date() - 60 )
+#  dplyr::filter( cases > 0 ) %>%
+#  dplyr::filter( region != 'COLIMA' ) %>%
+#  dplyr::filter( region != 'DURANGO' )
 
-#cases %>% View()
-
-# Region codes para el mapita
-#region_codes <- cases %>%
-#  dplyr::select(region, region_code = fips) %>%
-#  unique()
-
-#saveRDS(region_codes, "united-states/data/region_codes.rds")
+cases <- cases %>%
+  dplyr::mutate(imported = 0) %>%
+  tidyr::gather(key = "import_status", value = "confirm", imported)
 
 # Get linelist ------------------------------------------------------------
 
@@ -167,15 +161,15 @@ get_international_linelist_custom <- function(countries = NULL, cities = NULL, p
 
 ## Version custom arreglada por 
 #print("Custom international linelist... ")
-#linelist <- get_international_linelist_custom(clean=TRUE)
+linelist <- get_international_linelist_custom(clean=TRUE)
 #print("DONE")
 
 #saveRDS(linelist,'')
 #saveRDS(linelist, file = "/home/covid/my_linelist.rds")
 
-print("Linelist procesada previamente...")
-linelist <- readRDS("/home/covid/my_linelist.rds")
-print("DONE Reading RDS")
+#print("Linelist procesada previamente...")
+#linelist <- readRDS("../my_linelist.rds")
+#print("DONE Reading RDS")
 
 #ll2 %>% View()
 
@@ -201,7 +195,6 @@ EpiNow::regional_rt_pipeline(
   target_folder = "mexico/regional",
   case_limit = 40,
   verbose = TRUE,
-
   horizon = 14,
   approx_delay = TRUE,
   report_forecast = TRUE,
